@@ -4,6 +4,7 @@ import { Section, SectionType, Lyrics, LyricsBase, LyricsType, SimpleLyrics, Tab
 import { ParserWarning } from "./ParserWarning";
 import { Tag, TagType } from "./Tag";
 import { TagConstants } from "./TagConstants";
+import { WarningCode } from "./WarningCode";
 
 export class ChordProParser {
     private _currentSection: Section;
@@ -40,7 +41,7 @@ export class ChordProParser {
      */
     parse(sheet: string): Song {
         if(!sheet.trim()){
-            this.addWarning("The song sheet is empty");
+            this.addWarning(WarningCode.EMPTY_SHEET, "The song sheet is empty");
             return new Song();
         }
         
@@ -103,11 +104,11 @@ export class ChordProParser {
     private parseTabLine(line: string) {
         if (this._currentSection instanceof Tabs) {
             if (!this.TAB_LINE_REGEX.test(line)) {
-                this.addWarning("This tabs line is invalid. It must starts with the string name and a pipe.");
+                this.addWarning(WarningCode.INVALID_TABS_LINE, "This tabs line is invalid. It must starts with the string name and a pipe.");
             }
             this.addLine(new TabLine(line)); // should it add the line even if the tab line is invalid?
         } else {
-            this.addWarning("Internal error: wrong section type");
+            this.addWarning(WarningCode.INTERNAL_ERROR_WRONG_SECTION_TYPE, "Internal error: wrong section type");
         }
     }
 
@@ -120,7 +121,7 @@ export class ChordProParser {
             const lineWithoutChords = line.replace(this.CHORD_REGEX, "");
             const invalidCharsRegex = /[\[\]\{\}]/;
             if (invalidCharsRegex.test(lineWithoutChords)) {
-                this.addWarning("The lyrics line contains invalid characters or unclosed chords.");
+                this.addWarning(WarningCode.INVALID_LYRICS_LINE, "The lyrics line contains invalid characters or unclosed chords.");
             }
 
             const lineParts = line.split(this.SPLIT_CHORD_REGEX);
@@ -129,10 +130,17 @@ export class ChordProParser {
                 const result = ChordLyricsPair.parse(part);
                 if (!result[0]) {
                     const lyrics = result[1].lyrics.trim();
+                    const chordText = result[1].text ?? "";
                     if (lyrics) {
-                        this.addWarning(`Cannot parse the chord '${result[1].text}' before the lyrics '${result[1].lyrics.trim()}'`);
+                        this.addWarning(
+                            WarningCode.CHORD_PARSE_ERROR_WITH_LYRICS,
+                            `Cannot parse the chord '${chordText}' before the lyrics '${lyrics}'`,
+                            { chord: chordText, lyrics }
+                        );
                     } else {
-                        this.addWarning(`Cannot parse the chord '${result[1].text}'`);
+                        this.addWarning(WarningCode.CHORD_PARSE_ERROR, `Cannot parse the chord '${chordText}'`, {
+                            chord: chordText,
+                        });
                     }
                 }
                 pairs.push(result[1]);
@@ -140,7 +148,7 @@ export class ChordProParser {
             const lyricsLine = new LyricsLine(pairs);
             this.addLine(lyricsLine);
         } else {
-            this.addWarning("Internal error: wrong section type");
+            this.addWarning(WarningCode.INTERNAL_ERROR_WRONG_SECTION_TYPE, "Internal error: wrong section type");
         }
     }
 
@@ -151,13 +159,13 @@ export class ChordProParser {
     private parseTag(line: string) {
         const match = line.match(this.TAG_REGEX);
         if (!match || !match.groups || !match.groups["value"]) {
-            this.addWarning("Invalid tag.");
+            this.addWarning(WarningCode.INVALID_TAG, "Invalid tag.");
             return;
         }
 
         const tag = Tag.parse(match.groups["value"].trim());
         if (!tag) {
-            this.addWarning("Unknown or mal-formatted tag.");
+            this.addWarning(WarningCode.UNKNOWN_OR_MALFORMED_TAG, "Unknown or mal-formatted tag.");
             return;
         }
 
@@ -176,6 +184,7 @@ export class ChordProParser {
                 break;
             case TagType.CustomMetadata:
                 this.parseCustomMetadataTag(tag.longName, tag.value);
+                break;
             case TagType.StartOfBlock:
                 this.parseStartOfBlockTag(tag.longName, tag.value);
                 break;
@@ -183,7 +192,7 @@ export class ChordProParser {
                 this.parseEndOfBlockTag(tag.longName);
                 break;
             default:
-                this.addWarning("Unknown tag type.");
+                this.addWarning(WarningCode.UNKNOWN_TAG_TYPE, "Unknown tag type.");
                 break;
         }
     }
@@ -194,7 +203,7 @@ export class ChordProParser {
      */
     private parseCommentTag(value: string | null) {
         if (!value) {
-            this.addWarning("The comment tag must have a value");
+            this.addWarning(WarningCode.COMMENT_TAG_MISSING_VALUE, "The comment tag must have a value");
             return;
         }
         this.addLine(new CommentLine(value));
@@ -206,12 +215,12 @@ export class ChordProParser {
      */
     private parseDefineTag(value: string | null) {
         if (!value) {
-            this.addWarning("The define tag must have a value");
+            this.addWarning(WarningCode.DEFINE_TAG_MISSING_VALUE, "The define tag must have a value");
             return;
         }
         const diagram = ChordDiagram.parse(value);
         if (!diagram) {
-            this.addWarning("The define tag is invalid");
+            this.addWarning(WarningCode.DEFINE_TAG_INVALID, "The define tag is invalid");
             return;
         }
         this._song.userDiagrams.push(diagram);
@@ -233,7 +242,11 @@ export class ChordProParser {
     private parseStartOfBlockTag(longName: string, value: string | null) {
         // check previous section is closed
         if (this._currentSectionTagName !== null) {
-            this.addWarning(`The section tag ${this._currentSectionTagName} must be closed before starting a new section`);
+            this.addWarning(
+                WarningCode.SECTION_NOT_CLOSED,
+                `The section tag ${this._currentSectionTagName} must be closed before starting a new section`,
+                { section: this._currentSectionTagName }
+            );
         }
 
         this.completeCurrentSection();
@@ -273,18 +286,23 @@ export class ChordProParser {
      */
     private parseEndOfBlockTag(name: string) {
         if (!this._currentSectionTagName) {
-            this.addWarning("This end of section tag is useless and will be ignore.");
+            this.addWarning(WarningCode.END_OF_SECTION_USELESS, "This end of section tag is useless and will be ignore.");
             return;
         }
         if (name.replace("end_of_", "") !== this._currentSectionTagName) {
-            this.addWarning("The end of section tag does not match the start of section tag.");
+            this.addWarning(WarningCode.END_OF_SECTION_MISMATCH, "The end of section tag does not match the start of section tag.");
         }
 
         this.completeCurrentSection();
     }
 
     private completeCurrentSection() {
-        if (this._currentSection.lines.length > 0) {
+        // A section made up only of blank lines (e.g. leftover formatting between the
+        // metadata directives and the first real content) isn't a real section - discard it
+        // instead of pushing an empty "phantom" section that would otherwise count as the
+        // song's first section and push the real content's margin/spacing down.
+        const hasRealContent = this._currentSection.lines.some((line) => !(line instanceof EmptyLine));
+        if (hasRealContent) {
             this._song.sections.push(this._currentSection);
         }
         this._currentSection = new SimpleLyrics();
@@ -298,7 +316,7 @@ export class ChordProParser {
      */
     private addLine(line: Line) {
         if (this._currentSection.sectionType === SectionType.Tabs && !(line instanceof TabLine)) {
-            this.addWarning("Tabs section can only contains tabs lines");
+            this.addWarning(WarningCode.TABS_SECTION_ONLY_TABS_LINES, "Tabs section can only contains tabs lines");
             return;
         }
         this._currentSection.addLine(line);
@@ -313,7 +331,7 @@ export class ChordProParser {
      */
     private parseMetadataTag(name: string, value: string | null) {
         if (!value || !value.trim()) {
-            this.addWarning("The metadata must have a value");
+            this.addWarning(WarningCode.METADATA_MISSING_VALUE, "The metadata must have a value");
             return;
         }
         switch (name) {
@@ -360,7 +378,7 @@ export class ChordProParser {
                 this.parseYearMetadata(value);
                 break;
             default:
-                this.addWarning("Unknown metadata tag");
+                this.addWarning(WarningCode.UNKNOWN_METADATA_TAG, "Unknown metadata tag");
                 break;
         }
     }
@@ -368,7 +386,7 @@ export class ChordProParser {
     private parseYearMetadata(value: string) {
         const year = parseInt(value, 10);
         if (isNaN(year) || year.toString().length != 4) {
-            this.addWarning("The year metadata must be a 4 digits number");
+            this.addWarning(WarningCode.YEAR_METADATA_INVALID, "The year metadata must be a 4 digits number");
             return;
         }
         this._song.year = year;
@@ -377,7 +395,7 @@ export class ChordProParser {
     private parseCapoMetadata(value: string) {
         const capo = parseInt(value, 10);
         if (isNaN(capo)) {
-            this.addWarning("The capo metadata must be a number");
+            this.addWarning(WarningCode.CAPO_METADATA_INVALID, "The capo metadata must be a number");
             return;
         }
         this._song.capo = capo;
@@ -387,7 +405,7 @@ export class ChordProParser {
         const regex = /^((?<time>[0-9]+)|(?<minutes>[0-5]?[0-9]):(?<seconds>[0-5][0-9]))$/;
         const match = value.match(regex);
         if (!match || !match.groups) {
-            this.addWarning("The duration metadata is invalid. Must be a number or a time (eg: 5:30)");
+            this.addWarning(WarningCode.DURATION_METADATA_INVALID, "The duration metadata is invalid. Must be a number or a time (eg: 5:30)");
             return;
         }
 
@@ -400,7 +418,7 @@ export class ChordProParser {
         const minutes = match.groups["minutes"];
         const seconds = match.groups["seconds"];
         if (!minutes || !seconds) {
-            this.addWarning("The duration metadata time format is invalid");
+            this.addWarning(WarningCode.DURATION_TIME_FORMAT_INVALID, "The duration metadata time format is invalid");
             return;
         }
         this._song.duration = parseInt(minutes, 10) * 60 + parseInt(seconds);
@@ -410,7 +428,7 @@ export class ChordProParser {
     private parseTempoMetadata(value: string) {
         const tempo = parseInt(value, 10);
         if (isNaN(tempo)) {
-            this.addWarning("The tempo metadata must be a number");
+            this.addWarning(WarningCode.TEMPO_METADATA_INVALID, "The tempo metadata must be a number");
             return;
         }
         this._song.tempo = tempo;
@@ -419,7 +437,7 @@ export class ChordProParser {
     private parseKeyMetadata(value: string) {
         const key = Key.parse(value);
         if (!key) {
-            this.addWarning("The key metadata is not a valid key");
+            this.addWarning(WarningCode.KEY_METADATA_INVALID, "The key metadata is not a valid key");
             return;
         }
         this._song.key = key;
@@ -430,7 +448,7 @@ export class ChordProParser {
         const match = value.match(regex);
 
         if (!match || !match.groups || !match.groups["top"] || !match.groups["bottom"]) {
-            this.addWarning("The time metadata is invalid. Must be number/number (eg: 6/8)");
+            this.addWarning(WarningCode.TIME_METADATA_INVALID, "The time metadata is invalid. Must be number/number (eg: 6/8)");
             return;
         }
 
@@ -444,8 +462,8 @@ export class ChordProParser {
     }
     //#endregion
 
-    private addWarning(message: string) {
-        const warning = new ParserWarning(message, this._currentLineIndex + 1);
+    private addWarning(code: string, message: string, params: Record<string, string> = {}) {
+        const warning = new ParserWarning(message, this._currentLineIndex + 1, code, params);
         this._warnings.push(warning);
     }
 }

@@ -286,7 +286,7 @@ export class HtmlBuilder implements IBuilder {
         return [this.buildHtmlElement("div", line.value ? line.value : "", classNames)];
     }
 
-    sectionStart(section: Section): string[] {
+    sectionStart(section: Section, isFirstSection = false): string[] {
         let rows: string[] = [];
         if (section instanceof Lyrics || section instanceof Tabs) {
             let type = "tab";
@@ -308,7 +308,8 @@ export class HtmlBuilder implements IBuilder {
                         break;
                 }
             }
-            rows.push(`<div class="section ${type}-section">`);
+            const firstSectionClass = isFirstSection ? " first-section" : "";
+            rows.push(`<div class="section ${type}-section${firstSectionClass}">`);
             if (section.value) {
                 const classNames = ["section-title"];
                 rows.push(this.buildHtmlElement("div", section.value, classNames));

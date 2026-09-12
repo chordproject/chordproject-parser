@@ -24,21 +24,35 @@ export abstract class Formatter implements IFormatter {
         // Wrap the entire song content in a single song-content div
         this._lines.push(...this._builder.contentStart());
 
+        let firstSection = true;
         song.sections.forEach((section) => {
             if (!this.settings.showTabs && section.sectionType == SectionType.Tabs) {
                 return;
             }
 
-            this._lines.push(...this._builder.sectionStart(section));
+            this._lines.push(...this._builder.sectionStart(section, firstSection));
+            firstSection = false;
+
+            // Skip leading blank lines within a section (e.g. left over in the source between
+            // the metadata directives and the first lyric line) - they're just formatting
+            // noise, not an intentional paragraph break, and would otherwise render as a big
+            // empty gap before the section's actual content even starts.
+            let hasRenderedContent = false;
             section.lines.forEach((line) => {
                 if (line instanceof EmptyLine) {
+                    if (!hasRenderedContent) {
+                        return;
+                    }
                     this._lines.push(...this._builder.emptyLine());
                 } else if (line instanceof LyricsLine) {
                     this._lines.push(...this._builder.lyricsLine(line));
+                    hasRenderedContent = true;
                 } else if (line instanceof TabLine) {
                     this._lines.push(...this._builder.tabLine(line));
+                    hasRenderedContent = true;
                 } else if (line instanceof CommentLine) {
                     this._lines.push(...this._builder.commentLine(line));
+                    hasRenderedContent = true;
                 }
             });
             this._lines.push(...this._builder.sectionEnd(section));

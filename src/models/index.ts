@@ -1,5 +1,5 @@
 export { Chord } from "./Chord";
-export { Key } from "./Key";
+export { Key, KeyMode } from "./Key";
 export { MusicNote, MusicAccidental, MusicLetter } from "./MusicNote";
 export { Song} from "./Song";
 export {TimeSignature} from "./TimeSignature";

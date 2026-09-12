@@ -2,34 +2,28 @@
     "compilerOptions": {
         "target": "ES2022", // Usa un target más reciente
         "module": "ESNext", // Mantén ESNext para módulos modernos
-        "outDir": "./dist",
-        "rootDir": "./src", // Define explícitamente el directorio raíz
+        "moduleResolution": "Bundler", // Entiende el "exports" map del package.json, como tsup/esbuild
         "strict": true, // Activa todas las comprobaciones estrictas
         "esModuleInterop": true, // Facilita la interoperabilidad con CommonJS
         "forceConsistentCasingInFileNames": true, // Evita problemas de mayúsculas/minúsculas
         "skipLibCheck": true, // Mejora el rendimiento al ignorar comprobaciones de tipos en archivos de definición
-        "moduleResolution": "node",
         "resolveJsonModule": true,
-        "declaration": true,
-        "declarationDir": "types",
-        "emitDeclarationOnly": false,
-        "sourceMap": true,
-        "allowSyntheticDefaultImports": true,
-        "noImplicitAny": true,
-        "removeComments": true,
-        "preserveConstEnums": true,
+        "noEmit": true, // tsup (esbuild) genera el JS/d.ts; tsc solo se usa para type-checking
+        "isolatedModules": true, // Requerido por esbuild: cada archivo debe poder transpilarse solo
         "allowJs": false,
+        "noFallthroughCasesInSwitch": true,
         "useDefineForClassFields": true // Comportamiento moderno para campos de clase
     },
     "include": [
-        "src/**/*"
+        "src/**/*",
+        "demo/**/*"
     ],
     "exclude": [
         "node_modules",
         "./dist",
-        "demo/**/*",
         "**/*.spec.ts",
         "**/*.test.ts",
         "**/tests/**"
     ]
 }
+

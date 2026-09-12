@@ -56,6 +56,14 @@ export class Tag {
             shortName: TagConstants.END_OF_TAB_SHORT,
             longName: TagConstants.END_OF_TAB,
         },
+        {
+            shortName: TagConstants.START_OF_GRID_SHORT,
+            longName: TagConstants.START_OF_GRID,
+        },
+        {
+            shortName: TagConstants.END_OF_GRID_SHORT,
+            longName: TagConstants.END_OF_GRID,
+        },
     ];
     //#endregion
     private constructor() {}
@@ -146,6 +154,8 @@ export class Tag {
                     tag._type = TagType.Define;
                 } else if (tag.longName === TagConstants.COMMENT) {
                     tag._type = TagType.Comment;
+                } else if (TagConstants.RECOGNIZED_CUSTOM_TAGS.includes(tag.longName)) {
+                    tag._type = TagType.Custom;
                 } else {
                     return undefined;
                 }

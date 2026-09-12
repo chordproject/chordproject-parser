@@ -76,6 +76,18 @@ test.each`
     expect(result).toEqual(chord);
 });
 
+test.each`
+    chord     | expectedMode
+    ${"Am"}   | ${KeyMode.Minor}
+    ${"Ami"}  | ${KeyMode.Minor}
+    ${"Amin"} | ${KeyMode.Minor}
+    ${"A-"}   | ${KeyMode.Minor}
+`("parse minor chord alias $chord", ({ chord, expectedMode }) => {
+    const result = Chord.parse(chord);
+    expect(result?.key.mode).toBe(expectedMode);
+    expect(result?.type).toBe("");
+});
+
 test("get key return the key", () => {
     const expectedNote = new Key(new MusicNote(MusicLetter.A, MusicAccidental.b));
     const chord = new Chord(expectedNote);

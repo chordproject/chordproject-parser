@@ -18,7 +18,10 @@ export class Key implements IClonable<Key> {
             return undefined;
         }
 
-        const regex = /^(?<note>[A-G](#{1,2}|b{1,2}|x)?)(?<mode>m?)$/;
+        // Minor aliases (m, mi, min, -) and major aliases (blank, maj, major) per the ChordPro
+        // spec: https://www.chordpro.org/chordpro/chordpro-chords/#appendix-list-of-known-chord-extensions
+        // Longer alternatives are listed first so e.g. "min" isn't cut short by the bare "m" alt.
+        const regex = /^(?<note>[A-G](#{1,2}|b{1,2}|x)?)(?<mode>major|maj|min|mi|m|-)?$/;
         const matches = text.trim().match(regex);
 
         if (!matches || !matches.groups) {
@@ -29,7 +32,8 @@ export class Key implements IClonable<Key> {
         if (note == undefined) {
             return undefined;
         }
-        const mode = matches.groups["mode"] === "m" ? KeyMode.Minor : KeyMode.Major;
+        const minorAliases = ["m", "mi", "min", "-"];
+        const mode = minorAliases.includes(matches.groups["mode"] ?? "") ? KeyMode.Minor : KeyMode.Major;
         return new Key(note, mode);
     }
 

@@ -39,6 +39,10 @@
     padding-left: 1em;
 }
 
+.song-content > .section.first-section {
+    margin-top: 0;
+}
+
 .tab-section {
     font-family: monospace;
 }

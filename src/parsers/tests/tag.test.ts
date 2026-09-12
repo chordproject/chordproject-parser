@@ -100,6 +100,46 @@ test("parse define tag", () => {
     expect(tag?.value).toEqual(expectedValue);
 });
 
+test("parse sog tag (grid short name)", () => {
+    const tag = Tag.parse("sog");
+    expect(tag).toBeDefined();
+    expect(tag?.longName).toEqual("start_of_grid");
+    expect(tag?.shortName).toEqual("sog");
+    expect(tag?.type).toEqual(TagType.StartOfBlock);
+});
+
+test("parse eog tag (grid short name)", () => {
+    const tag = Tag.parse("eog");
+    expect(tag).toBeDefined();
+    expect(tag?.longName).toEqual("end_of_grid");
+    expect(tag?.shortName).toEqual("eog");
+    expect(tag?.type).toEqual(TagType.EndOfBlock);
+});
+
+test.each`
+    name
+    ${"new_song"}
+    ${"ns"}
+    ${"sorttitle"}
+    ${"sortartist"}
+    ${"tag"}
+    ${"highlight"}
+    ${"comment_italic"}
+    ${"ci"}
+    ${"comment_box"}
+    ${"cb"}
+    ${"image"}
+`("recognizes $name as a valid (silently accepted) custom tag, not a warning", ({ name }) => {
+    const tag = Tag.parse(name);
+    expect(tag).toBeDefined();
+    expect(tag?.type).toEqual(TagType.Custom);
+});
+
+test("still returns undefined for a genuinely unknown/malformed tag", () => {
+    const tag = Tag.parse("not_a_real_directive");
+    expect(tag).toBeUndefined();
+});
+
 test("parse comment tag", () => {
     const tag = Tag.parse("comment: my comment");
     const expectedType = TagType.Comment;

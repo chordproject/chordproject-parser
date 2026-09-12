@@ -63,6 +63,16 @@ export abstract class TagConstants {
     static readonly END_OF_VERSE = "end_of_verse";
 
     /**
+     * Start of grid directive. See https://www.chordpro.org/chordpro/directives-env_grid/
+     */
+    static readonly START_OF_GRID = "start_of_grid";
+
+    /**
+     * End of grid directive. See https://www.chordpro.org/chordpro/directives-env_grid/
+     */
+    static readonly END_OF_GRID = "end_of_grid";
+
+    /**
      * Key meta directive. See https://www.chordpro.org/chordpro/directives-key/
      */
     static readonly KEY = "key";
@@ -128,6 +138,8 @@ export abstract class TagConstants {
     static readonly END_OF_BRIDGE_SHORT = "eob";
     static readonly START_OF_TAB_SHORT = "sot";
     static readonly END_OF_TAB_SHORT = "eot";
+    static readonly START_OF_GRID_SHORT = "sog";
+    static readonly END_OF_GRID_SHORT = "eog";
 
     static readonly META_TAGS = [
         TagConstants.ALBUM,
@@ -154,4 +166,24 @@ export abstract class TagConstants {
     ];
 
     static readonly END_BLOCK_TAGS = [TagConstants.END_OF_BRIDGE, TagConstants.END_OF_CHORUS, TagConstants.END_OF_TAB, TagConstants.END_OF_VERSE];
+
+    /**
+     * Valid ChordPro directives this parser doesn't give special handling to yet (preamble,
+     * sort keys, the generic {tag} escape hatch, comment/image variants). Accepted as a plain
+     * Custom tag instead of an "unknown tag" warning, since they're valid spec syntax - the
+     * editor (chordproject-editor) also treats these as known/valid, so the two must agree.
+     */
+    static readonly RECOGNIZED_CUSTOM_TAGS = [
+        "new_song",
+        "ns",
+        "sorttitle",
+        "sortartist",
+        "tag",
+        "highlight",
+        "comment_italic",
+        "ci",
+        "comment_box",
+        "cb",
+        "image",
+    ];
 }

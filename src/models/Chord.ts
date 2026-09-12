@@ -16,7 +16,9 @@ export class Chord implements IClonable<Chord> {
         return new Chord(this.key.clone(), this.type, this.bass?.clone());
     }
 
-    private static readonly chordRegex = /^(?<note>[A-G](#{1,2}|b{1,2}|x)?(min|m(?!aj)|-)?)(?<type>(?!\/).*?)?(?:$|(?:\/(?<bass>[A-G](#{1,2}|b{1,2}|x)?)))$/;
+    // Minor qualifiers per the ChordPro spec (m, mi, min, -). "min" and "mi" are ordered before
+    // the bare "m(?!aj)" alt so e.g. "Amin7" captures the full "min" instead of stopping at "mi".
+    private static readonly chordRegex = /^(?<note>[A-G](#{1,2}|b{1,2}|x)?(min|mi|m(?!aj)|-)?)(?<type>(?!\/).*?)?(?:$|(?:\/(?<bass>[A-G](#{1,2}|b{1,2}|x)?)))$/;
 
     public static parse(text: string): Chord | undefined {
         if (!text) {

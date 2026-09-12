@@ -78,3 +78,65 @@ All the [Dm7] Angels and the [F]Saints
 {end_of_chorus}
 
 `.substring(1);
+
+// Regression test: {meta: ...} tags used to fall through into start_of_block parsing
+// (missing `break` in ChordProParser.parseTag's switch), silently injecting a bogus
+// "Custom" lyrics section and splitting the surrounding verse in two.
+test("parse custom meta tag without corrupting section structure", () => {
+    const cp = new ChordProParser();
+    const song = cp.parse(metaSheet);
+
+    expect(song.customMetadatas).toContainEqual(["guitarist", "Ritchie Blackmore"]);
+
+    const customSections = song.sections.filter(
+        (s: any) => s instanceof Lyrics && s.type === LyricsType.Custom
+    );
+    expect(customSections.length).toEqual(0);
+
+    const verseSection = <Lyrics>song.sections.find((f: any) => f instanceof Lyrics && f.type === LyricsType.Verse);
+    expect(verseSection?.lines.length).toEqual(2);
+});
+
+test("warnings carry a stable code and interpolation params, not just an English message", () => {
+    const cp = new ChordProParser();
+    cp.parse(`{not a real tag}\n`);
+
+    expect(cp.warnings).toHaveLength(1);
+    expect(cp.warnings[0].code).toEqual("unknown_or_malformed_tag");
+    expect(cp.warnings[0].params).toEqual({});
+});
+
+// Regression test: blank lines left between the metadata directives and an explicit
+// {start_of_chorus}/{start_of_verse} used to be saved as their own "phantom" section (only
+// EmptyLine entries, no real content), which counted as the song's first section - pushing
+// the real chorus/verse down to "second section" and giving it a full top margin instead of
+// being flush with the top like an actual first section should be.
+test("does not create a phantom section from blank lines before the first start_of block", () => {
+    const cp = new ChordProParser();
+    const song = cp.parse(
+        `
+{title: Me gozare}
+{key: B}
+
+
+{start_of_chorus}
+[Em]Me gozare, me alegrare,
+{end_of_chorus}
+`.substring(1)
+    );
+
+    expect(song.sections).toHaveLength(1);
+    expect(song.sections[0]).toBeInstanceOf(Lyrics);
+    expect((song.sections[0] as Lyrics).type).toEqual(LyricsType.Chorus);
+});
+
+const metaSheet = `
+{title: Test Song}
+{key: C}
+
+{start_of_verse}
+[C]Line one
+{meta: guitarist Ritchie Blackmore}
+[G]Line two
+{end_of_verse}
+`.substring(1);

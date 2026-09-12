@@ -1,4 +1,4 @@
-import { MusicNote } from "../models";
+import { Key, KeyMode, MusicNote } from "../models";
 
 export class MusicTheoryHelper {
     static circleOfFifths: string[] = ["C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F"];
@@ -125,5 +125,60 @@ export class MusicTheoryHelper {
 
         // Default to the standard mapping
         return this.reversePitchClassMap[pitchClass];
+    }
+
+    /**
+     * Converts a MusicNote's letter+accidental into a pitchClassMap key (e.g. "C#", "Eb"),
+     * ignoring double sharps/flats which aren't represented in that map.
+     */
+    static noteToKey(note: MusicNote): string | null {
+        const key = note.toString();
+        return this.pitchClassMap[key] !== undefined ? key : null;
+    }
+
+    /**
+     * A short "does this key look sharp or flat" string used as enharmonic context, e.g. when
+     * transposing a chord we want to spell it consistently with the song's (possibly already
+     * transposed) key rather than always defaulting to sharps.
+     */
+    static toKeySignature(key: Key): string {
+        return this.noteToKey(key.note) ?? key.note.toString();
+    }
+
+    // Common "easy" open-chord shapes guitarists use with a capo, expressed as pitch class + mode.
+    private static readonly EASY_GUITAR_SHAPES: { pitchClass: number; mode: KeyMode }[] = [
+        { pitchClass: 0, mode: KeyMode.Major }, // C
+        { pitchClass: 7, mode: KeyMode.Major }, // G
+        { pitchClass: 2, mode: KeyMode.Major }, // D
+        { pitchClass: 9, mode: KeyMode.Major }, // A
+        { pitchClass: 4, mode: KeyMode.Major }, // E
+        { pitchClass: 9, mode: KeyMode.Minor }, // Am
+        { pitchClass: 4, mode: KeyMode.Minor }, // Em
+        { pitchClass: 2, mode: KeyMode.Minor }, // Dm
+    ];
+
+    /**
+     * For a given song key, returns the capo fret positions where the song could instead be
+     * played using an easy open-chord shape (C/G/D/A/E or Am/Em/Dm), along with that shape's key.
+     */
+    static getCapoSuggestions(key: Key): { fret: number; shapeKey: string }[] {
+        const noteKey = this.noteToKey(key.note);
+        if (noteKey === null) {
+            return [];
+        }
+        const keyPitchClass = this.pitchClassMap[noteKey];
+
+        const suggestions: { fret: number; shapeKey: string }[] = [];
+        for (let fret = 0; fret <= 11; fret++) {
+            const shapePitchClass = (keyPitchClass - fret + 12) % 12;
+            const isEasyShape = this.EASY_GUITAR_SHAPES.some(
+                (shape) => shape.pitchClass === shapePitchClass && shape.mode === key.mode
+            );
+            if (isEasyShape) {
+                const shapeNote = this.reversePitchClassMap[shapePitchClass];
+                suggestions.push({ fret, shapeKey: key.mode === KeyMode.Minor ? `${shapeNote}m` : shapeNote });
+            }
+        }
+        return suggestions;
     }
 }

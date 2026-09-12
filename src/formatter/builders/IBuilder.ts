@@ -32,6 +32,6 @@ export interface IBuilder {
     contentStart(): string[];
     contentEnd(): string[];
 
-    sectionStart(section: Section): string[];
+    sectionStart(section: Section, isFirstSection?: boolean): string[];
     sectionEnd(section: Section): string[];
 }

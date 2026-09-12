@@ -57,6 +57,20 @@ test.each`
     expect(resultKey).toBeUndefined();
 });
 
+test.each`
+    key          | expectedNote | expectedMode
+    ${"Am"}     | ${MusicLetter.A} | ${KeyMode.Minor}
+    ${"Amin"}   | ${MusicLetter.A} | ${KeyMode.Minor}
+    ${"A-"}     | ${MusicLetter.A} | ${KeyMode.Minor}
+    ${"Cmaj"}   | ${MusicLetter.C} | ${KeyMode.Major}
+    ${"Cmajor"} | ${MusicLetter.C} | ${KeyMode.Major}
+`("parse key aliases $key", ({ key, expectedNote, expectedMode }) => {
+    const resultKey = Key.parse(key);
+    expect(resultKey).toBeDefined();
+    expect(resultKey?.note.letter).toBe(expectedNote);
+    expect(resultKey?.mode).toBe(expectedMode);
+});
+
 describe("return the key as text", () => {
     it("minor key", () => {
         const key = new Key(new MusicNote(MusicLetter.A, MusicAccidental.b), KeyMode.Minor);
