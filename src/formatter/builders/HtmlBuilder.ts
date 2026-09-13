@@ -21,6 +21,7 @@ class SimplePrintable implements IPrintable {
 class HtmlElement implements IPrintable {
     tag: string;
     classNames: string[] = [];
+    attributes: Record<string, string> = {};
     innerHtml: IPrintable[] = [];
 
     constructor(tag: string, classNames: string[], ...innerHtml: IPrintable[]) {
@@ -31,7 +32,10 @@ class HtmlElement implements IPrintable {
 
     toStringLines(): string[] {
         const lines: string[] = [];
-        lines.push(`<${this.tag} class="${this.classNames.join(" ")}">`);
+        const attributes = Object.entries(this.attributes)
+            .map(([name, value]) => ` ${name}="${value}"`)
+            .join("");
+        lines.push(`<${this.tag} class="${this.classNames.join(" ")}"${attributes}>`);
         this.innerHtml.forEach((element) => {
             lines.push(...element.toStringLines());
         });
@@ -44,6 +48,9 @@ class HtmlElement implements IPrintable {
     }
     addString(value: string) {
         this.innerHtml.push(new SimplePrintable(value));
+    }
+    addAttribute(name: string, value: string) {
+        this.attributes[name] = value;
     }
 }
 
@@ -156,11 +163,16 @@ export class HtmlBuilder implements IBuilder {
     private createChordElement(chord: string, isChord: boolean): HtmlElement {
         let classNames = ["above-lyrics"];
         if (isChord) {
-            classNames.push("chord");
+            classNames.push("chord", "chord-token");
         } else {
             classNames.push("annotation");
         }
         let element = new HtmlElement("span", classNames);
+        if (isChord) {
+            element.addAttribute("role", "button");
+            element.addAttribute("tabindex", "0");
+            element.addAttribute("aria-haspopup", "dialog");
+        }
         element.addString(chord);
         return element;
     }

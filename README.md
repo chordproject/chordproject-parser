@@ -106,7 +106,7 @@ Essentially, it looks like this:
 To start the demo:
 
 ```sh
-$ npm run start
+$ npm run dev
 ```
 
 ...then click on the http://localhost:8081/ link to open the demo in your browser

@@ -197,10 +197,10 @@ test("format lyrics line with last chord", () => {
     const result = _builder.lyricsLine(line);
     const expected = [
         `<div class="lyrics-line">`,
-        `<div class="word">`,`<div class="chord-lyrics">`,`<span class="above-lyrics chord">`,`Am`,`</span>`,`<span class="lyrics">`,`&nbsp;Who`,`</span>`,`</div>`,`</div>`,
+        `<div class="word">`,`<div class="chord-lyrics">`,`<span class="above-lyrics chord chord-token">`,`Am`,`</span>`,`<span class="lyrics">`,`&nbsp;Who`,`</span>`,`</div>`,`</div>`,
         `<div class="word">`,`<span class="lyrics">`,`is`,`</span>`,`</div>`,
         `<div class="word">`,`<span class="lyrics">`,`like`,`</span>`,`</div>`,
-        `<div class="word">`,`<div class="chord-lyrics">`,`<span class="above-lyrics chord">`,`Bb11`,`</span>`,`<span class="lyrics">`,`Him,`,`</span>`,`</div>`,`</div>`,
+        `<div class="word">`,`<div class="chord-lyrics">`,`<span class="above-lyrics chord chord-token">`,`Bb11`,`</span>`,`<span class="lyrics">`,`Him,`,`</span>`,`</div>`,`</div>`,
         `</div>`
     ];
     expect(result).toMatchObject(expected);
@@ -216,7 +216,7 @@ test("format complexe lyrics line", () => {
     ];
     let line = new LyricsLine(pairs);
     const result = _builder.lyricsLine(line);
-    const expected = `<div class="lyrics-line"><div class="word"><div class="chord-lyrics"><span class="above-lyrics chord">C</span><span class="lyrics">&nbsp;</span></div></div><div class="word"><span class="lyrics">Ima</span><div class="chord-lyrics"><span class="above-lyrics chord">Am</span><span class="lyrics">gine</span></div></div><div class="word"><span class="lyrics">all</span></div><div class="word"><span class="lyrics">the</span></div><div class="word"><span class="lyrics">peo</span><div class="chord-lyrics"><span class="above-lyrics chord">G</span><span class="lyrics">ple</span></div></div><div class="word"><div class="chord-lyrics"><span class="above-lyrics chord">F</span><span class="lyrics">sharing</span></div></div><div class="word"><span class="lyrics">all</span></div><div class="word"><span class="lyrics">the</span></div><div class="word"><span class="lyrics">world</span></div></div>`;
+    const expected = `<div class="lyrics-line"><div class="word"><div class="chord-lyrics"><span class="above-lyrics chord chord-token">C</span><span class="lyrics">&nbsp;</span></div></div><div class="word"><span class="lyrics">Ima</span><div class="chord-lyrics"><span class="above-lyrics chord chord-token">Am</span><span class="lyrics">gine</span></div></div><div class="word"><span class="lyrics">all</span></div><div class="word"><span class="lyrics">the</span></div><div class="word"><span class="lyrics">peo</span><div class="chord-lyrics"><span class="above-lyrics chord chord-token">G</span><span class="lyrics">ple</span></div></div><div class="word"><div class="chord-lyrics"><span class="above-lyrics chord chord-token">F</span><span class="lyrics">sharing</span></div></div><div class="word"><span class="lyrics">all</span></div><div class="word"><span class="lyrics">the</span></div><div class="word"><span class="lyrics">world</span></div></div>`;
     const html = result.join("");
     expect(html).toEqual(expected);
 });
