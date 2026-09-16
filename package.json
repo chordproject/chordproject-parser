@@ -19,6 +19,7 @@
         "src/style.css"
     ],
     "description": "A TypeScript library for parsing and formatting ChordPro songs.",
+    "license": "AGPL-3.0-only",
     "keywords": [
         "chordpro",
         "chordproject",
