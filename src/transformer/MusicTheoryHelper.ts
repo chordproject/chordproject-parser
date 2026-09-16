@@ -1,6 +1,14 @@
 import { Key, KeyMode, MusicNote } from "../models";
 
 export class MusicTheoryHelper {
+    private static readonly sharpKeys = new Set([
+        "G", "D", "A", "E", "B", "F#", "C#",
+        "Em", "Bm", "F#m", "C#m", "G#m", "D#m", "A#m",
+    ]);
+    private static readonly flatKeys = new Set([
+        "F", "Bb", "Eb", "Ab", "Db", "Gb", "Cb",
+        "Dm", "Gm", "Cm", "Fm", "Bbm", "Ebm", "Abm",
+    ]);
     static circleOfFifths: string[] = ["C", "G", "D", "A", "E", "B", "F#", "Db", "Ab", "Eb", "Bb", "F"];
 
     static pitchClassMap: Record<string, number> = {
@@ -116,10 +124,11 @@ export class MusicTheoryHelper {
         const sharpPreferred = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         const flatPreferred = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
 
-        // Prefer enharmonics that match the current key signature
-        if (keyContext && keyContext.includes("#")) {
+        // Prefer enharmonics from the actual key signature. Keys such as E major and C#m
+        // contain sharps even though their written tonic has no # character.
+        if (keyContext && MusicTheoryHelper.sharpKeys.has(keyContext)) {
             return sharpPreferred[pitchClass];
-        } else if (keyContext && keyContext.includes("b")) {
+        } else if (keyContext && MusicTheoryHelper.flatKeys.has(keyContext)) {
             return flatPreferred[pitchClass];
         }
 
@@ -137,12 +146,11 @@ export class MusicTheoryHelper {
     }
 
     /**
-     * A short "does this key look sharp or flat" string used as enharmonic context, e.g. when
-     * transposing a chord we want to spell it consistently with the song's (possibly already
-     * transposed) key rather than always defaulting to sharps.
+      * Returns the normalized tonic plus mode, used to select enharmonics consistent with the
+      * song's actual key signature (for example E and C#m prefer sharps).
      */
     static toKeySignature(key: Key): string {
-        return this.noteToKey(key.note) ?? key.note.toString();
+          return key.toString();
     }
 
     // Common "easy" open-chord shapes guitarists use with a capo, expressed as pitch class + mode.

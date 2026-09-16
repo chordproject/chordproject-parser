@@ -31,6 +31,27 @@ test("transpose down moves every chord and the key by one semitone", () => {
     expect(chords).toEqual(["B", "E", "F#"]);
 });
 
+test("uses sharps for a key with a sharp key signature even when its tonic has no accidental", () => {
+    const song = transposeText(`{key: F}\n[Dm7]Uno [Bb]dos [Gm]tres [Am7]cuatro\n`, "down");
+
+    expect(song.key?.toString()).toBe("E");
+    expect(song.getAllChords().map((chord) => chord.toString())).toEqual(["C#m7", "A", "F#m", "G#m7"]);
+});
+
+test("spells the Bb to A transposition with sharps after the key changes", () => {
+    const song = transposeText(`{key: Bb}\n[Dm7]Uno [Bb]dos [Gm]tres [Am7]cuatro\n`, "down");
+
+    expect(song.key?.toString()).toBe("A");
+    expect(song.getAllChords().map((chord) => chord.toString())).toEqual(["C#m7", "A", "F#m", "G#m7"]);
+});
+
+test("keeps flat spelling in keys with flat key signatures", () => {
+    const song = transposeText(`{key: Gb}\n[Abm]Uno [B]dos\n`, "down");
+
+    expect(song.key?.toString()).toBe("F");
+    expect(song.getAllChords().map((chord) => chord.toString())).toEqual(["Gm", "Bb"]);
+});
+
 test.each`
     alias
     ${"Am"}
