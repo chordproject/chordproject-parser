@@ -16,13 +16,13 @@ This gives back a *Song* object that can then be transposed with the **Transpose
 To install run:
 
 ```sh
-$ npm i chordproject-parser
+$ npm i @chordproject/parser
 ```
 
 Load with `import`:
 
 ```typescript
-import { ChordProParser } from "chordproject-parser";
+import { ChordProParser } from "@chordproject/parser";
 ```
 
 ### Parser

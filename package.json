@@ -1,6 +1,6 @@
 {
-    "name": "chordproject-parser",
-    "version": "2.0.0",
+    "name": "@chordproject/parser",
+    "version": "1.0.0",
     "type": "module",
     "module": "dist/index.js",
     "main": "dist/index.cjs",
