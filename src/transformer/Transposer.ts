@@ -15,10 +15,17 @@ export abstract class Transposer {
         // transposed key, even when the original song had no explicit {key} directive.
         newSong.key = songKey;
 
-        const semitones = direction === "up" ? 1 : -1;
-        const baseContext = MusicTheoryHelper.toKeySignature(songKey);
+        const contextKey = newSong.transpositionContext ?? songKey.clone();
+        newSong.transpositionContext = contextKey.clone();
 
-        const transposeNote = (note: MusicNote, context: string): MusicNote | null => {
+        const semitones = direction === "up" ? 1 : -1;
+        const baseContext = MusicTheoryHelper.toKeySignature(contextKey);
+        const contextNote = MusicTheoryHelper.noteToKey(contextKey.note);
+        const songKeyNote = MusicTheoryHelper.noteToKey(songKey.note);
+        const completesChromaticCycle = contextNote !== null && songKeyNote !== null &&
+            (MusicTheoryHelper.pitchClassMap[songKeyNote] + semitones + 12) % 12 === MusicTheoryHelper.pitchClassMap[contextNote];
+
+        const transposeNote = (note: MusicNote, context: string, preserveChromaticBoundary = true): MusicNote | null => {
             const noteKey = MusicTheoryHelper.noteToKey(note);
             if (noteKey === null) {
                 return null;
@@ -31,11 +38,13 @@ export abstract class Transposer {
 
             const nextPitchClass = (currentPitchClass + semitones + 12) % 12;
             const nextNote = MusicTheoryHelper.reversePitchClassMap[nextPitchClass];
-            const preferred = MusicTheoryHelper.getPreferredEnharmonic(nextNote, context);
+            const preferred = preserveChromaticBoundary
+                ? MusicTheoryHelper.getPreferredEnharmonicForChord(nextNote, note.toString(), context)
+                : MusicTheoryHelper.getPreferredEnharmonic(nextNote, context);
             return MusicNote.parse(preferred) ?? null;
         };
 
-        songKey.note = transposeNote(songKey.note, baseContext) ?? songKey.note;
+        songKey.note = transposeNote(songKey.note, baseContext, !completesChromaticCycle) ?? songKey.note;
 
         newSong.sections.forEach((section) => {
             if (section.sectionType !== SectionType.Lyrics) {
@@ -51,13 +60,13 @@ export abstract class Transposer {
                     }
 
                     const chordContext = MusicTheoryHelper.toKeySignature(songKey);
-                    const transposedChord = transposeNote(pair.chord.key.note, chordContext);
+                    const transposedChord = transposeNote(pair.chord.key.note, chordContext, !completesChromaticCycle);
                     if (transposedChord) {
                         pair.chord.key.note = transposedChord;
                     }
 
                     if (pair.chord.bass) {
-                        const transposedBass = transposeNote(pair.chord.bass, chordContext);
+                        const transposedBass = transposeNote(pair.chord.bass, chordContext, !completesChromaticCycle);
                         if (transposedBass) {
                             pair.chord.bass = transposedBass;
                         }

@@ -45,6 +45,13 @@ test("spells the Bb to A transposition with sharps after the key changes", () =>
     expect(song.getAllChords().map((chord) => chord.toString())).toEqual(["C#m7", "A", "F#m", "G#m7"]);
 });
 
+test("preserves chromatic sharp spelling across E-F and B-C boundaries", () => {
+    const song = transposeText(`{key: E}\n[Em/B]Uno\n`, "up");
+
+    expect(song.key?.toString()).toBe("E#");
+    expect(song.getAllChords().map((chord) => chord.toString())).toEqual(["E#m/B#"]);
+});
+
 test("keeps flat spelling in keys with flat key signatures", () => {
     const song = transposeText(`{key: Gb}\n[Abm]Uno [B]dos\n`, "down");
 
@@ -92,4 +99,31 @@ test("falls back to the song's inferred key when no {key} directive is present",
     // one semitone lands on Bbm and every chord is re-spelled to match that flat key.
     expect(song.key?.toString()).toBe("Bbm");
     expect(song.getAllChords().map((c) => c.toString())).toEqual(["Bbm", "Ebm", "Db", "Ab", "Bbm"]);
+});
+
+test.each([
+    {
+        name: 'natural D prefers Eb after one semitone',
+        sheet: '{key: D}\n[Dsus2]x\n',
+        direction: 'up' as const,
+        steps: 1,
+        expected: ['Ebsus2'],
+    },
+    {
+        name: 'sharp F#m keeps the sharp spelling after two semitones',
+        sheet: '{key: D}\n[F#m]x\n',
+        direction: 'up' as const,
+        steps: 2,
+        expected: ['G#m'],
+    },
+    {
+        name: 'flat Abm keeps the flat spelling when moving down',
+        sheet: '{key: Gb}\n[Abm]x\n',
+        direction: 'down' as const,
+        steps: 1,
+        expected: ['Gm'],
+    },
+])('$name', ({ sheet, direction, steps, expected }) => {
+    const song = transposeText(sheet, direction, steps);
+    expect(song.getAllChords().map((chord) => chord.toString())).toEqual(expected);
 });

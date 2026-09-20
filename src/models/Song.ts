@@ -59,6 +59,9 @@ export class Song implements IClonable<Song> {
      */
     key: Key | null = null;
 
+    /** Stable key context used when a song is transposed repeatedly. */
+    transpositionContext: Key | null = null;
+
     /**
      * Capo setting for the song
      */
@@ -223,6 +226,9 @@ export class Song implements IClonable<Song> {
         }
         if (this.key) {
             clonedSong.key = this.key.clone();
+        }
+        if (this.transpositionContext) {
+            clonedSong.transpositionContext = this.transpositionContext.clone();
         }
 
         this.userDiagrams.forEach((userDiagram) => {
