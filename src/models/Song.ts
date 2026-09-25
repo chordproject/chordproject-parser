@@ -172,24 +172,24 @@ export class Song implements IClonable<Song> {
         const firstKey = chords[0].key;
         const lastKey = chords[chords.length - 1].key;
 
-        if (firstKey.equals(lastKey)) {
+        if (this.keysAreEnharmonicallyEqual(firstKey, lastKey)) {
             return firstKey.clone();
         }
 
         let countChords: { count: number; key: Key }[] = [];
         chords.forEach((chord) => {
-            let foundChord = countChords.find((c) => c.key.equals(chord.key));
+            let foundChord = countChords.find((c) => this.keysAreEnharmonicallyEqual(c.key, chord.key));
             if (foundChord) {
                 foundChord.count++;
             } else {
-                countChords.push({ count: 0, key: chord.key.clone() });
+                countChords.push({ count: 1, key: chord.key.clone() });
             }
         });
 
         countChords.sort((c, c2) => c2.count - c.count);
         let topChord = countChords[0];
-        let countFirstChord = countChords.find((c) => c.key.equals(firstKey))!.count;
-        let countLastChord = countChords.find((c) => c.key.equals(lastKey))!.count;
+        let countFirstChord = countChords.find((c) => this.keysAreEnharmonicallyEqual(c.key, firstKey))!.count;
+        let countLastChord = countChords.find((c) => this.keysAreEnharmonicallyEqual(c.key, lastKey))!.count;
 
         if (topChord.count > countFirstChord && topChord.count > countLastChord) {
             return topChord.key.clone();
@@ -199,6 +199,30 @@ export class Song implements IClonable<Song> {
         } else {
             return lastKey.clone();
         }
+    }
+
+    private keysAreEnharmonicallyEqual(first: Key, second: Key): boolean {
+        return first.mode === second.mode && this.notePitchClass(first.note) === this.notePitchClass(second.note);
+    }
+
+    private notePitchClass(note: MusicNote): number {
+        const naturalPitch: Record<number, number> = {
+            0: 9,
+            1: 11,
+            2: 0,
+            3: 2,
+            4: 4,
+            5: 5,
+            6: 7,
+        };
+        const accidentalOffset: Record<number, number> = {
+            0: -1,
+            1: -2,
+            2: 1,
+            3: 2,
+            4: 0,
+        };
+        return (naturalPitch[note.letter] + accidentalOffset[note.accidental] + 12) % 12;
     }
 
     /**

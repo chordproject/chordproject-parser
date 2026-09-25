@@ -57,6 +57,16 @@ test("should return the C key when it's the top used chord and last chord", asyn
     expect(result!.toString()).toBe("C");
 });
 
+test.each([
+    { chords: ["B#", "C", "B#"], expected: "B#" },
+    { chords: ["E#", "F", "E#"], expected: "E#" },
+])("preserves the written spelling when inferring enharmonic keys", ({ chords, expected }) => {
+    const song = new Song();
+    song.getAllChords = jest.fn(() => getChords(chords));
+
+    expect(song.getPossibleKey()?.toString()).toBe(expected);
+});
+
 function getChords(chords: string[]): Chord[] {
     const validChords: Chord[] = [];
     chords.forEach((chord) => {
