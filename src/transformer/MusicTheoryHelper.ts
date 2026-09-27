@@ -118,6 +118,70 @@ export class MusicTheoryHelper {
         return index2 - index1;
     }
 
+    static diatonicLetterSteps(source: MusicNote, target: MusicNote): number {
+        const sourceIndex = this.noteLetters.indexOf(source.toString()[0]);
+        const targetIndex = this.noteLetters.indexOf(target.toString()[0]);
+        if (sourceIndex === -1 || targetIndex === -1) {
+            return 0;
+        }
+
+        const steps = (targetIndex - sourceIndex + this.noteLetters.length) % this.noteLetters.length;
+        return steps > 3 ? steps - this.noteLetters.length : steps;
+    }
+
+    static transposeNoteByInterval(note: MusicNote, letterSteps: number, semitones: number): MusicNote | null {
+        const match = note.toString().match(/^([A-G])((?:#{1,2}|b{1,2}|x)?)$/);
+        if (!match) {
+            return null;
+        }
+
+        const sourcePitch = this.getWrittenPitch(match[1], match[2]);
+        const sourceLetterIndex = this.noteLetters.indexOf(match[1]);
+        const targetLetterIndex = (sourceLetterIndex + letterSteps + this.noteLetters.length) % this.noteLetters.length;
+        const targetLetter = this.noteLetters[targetLetterIndex];
+        const targetPitch = (sourcePitch + semitones + 12) % 12;
+        return MusicNote.parse(this.spellPitch(targetLetter, targetPitch)) ?? null;
+    }
+
+    static transposeNoteInKey(note: MusicNote, sourceKey: Key, targetKey: Key, semitones: number): MusicNote | null {
+        const sourcePitch = this.getNotePitch(note.toString());
+        const sourceTonicPitch = this.getNotePitch(sourceKey.note.toString());
+        const targetTonicPitch = this.getNotePitch(targetKey.note.toString());
+        if (sourcePitch < 0 || sourceTonicPitch < 0 || targetTonicPitch < 0) {
+            return null;
+        }
+
+        const scaleIntervals = sourceKey.mode === KeyMode.Minor
+            ? [0, 2, 3, 5, 7, 8, 10]
+            : [0, 2, 4, 5, 7, 9, 11];
+        const relativePitch = (sourcePitch - sourceTonicPitch + 12) % 12;
+        const degree = scaleIntervals.indexOf(relativePitch);
+        if (degree >= 0) {
+            const targetLetterIndex = (this.noteLetters.indexOf(targetKey.note.toString()[0]) + degree) % this.noteLetters.length;
+            const targetLetter = this.noteLetters[targetLetterIndex];
+            const targetPitch = (targetTonicPitch + scaleIntervals[degree]) % 12;
+            return MusicNote.parse(this.spellPitch(targetLetter, targetPitch)) ?? null;
+        }
+
+        const letterSteps = this.diatonicLetterSteps(sourceKey.note, targetKey.note);
+        return this.transposeNoteByInterval(note, letterSteps, semitones);
+    }
+
+    static transposeKeyNote(note: MusicNote, semitones: number, keyContext?: string, restoreContextSpelling = false): MusicNote | null {
+        const key = this.noteToKey(note);
+        if (!key) {
+            return null;
+        }
+
+        const pitchClass = this.pitchClassMap[key];
+        const nextPitchClass = (pitchClass + semitones + 12) % 12;
+        const canonicalNote = this.reversePitchClassMap[nextPitchClass];
+        const spelling = restoreContextSpelling && keyContext
+            ? this.getPreferredEnharmonic(canonicalNote, keyContext)
+            : canonicalNote;
+        return MusicNote.parse(spelling) ?? null;
+    }
+
     static getPreferredEnharmonic(noteStr: string, keyContext?: string): string {
         const pitchClass = this.pitchClassMap[noteStr];
         if (pitchClass === undefined) {

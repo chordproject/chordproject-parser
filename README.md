@@ -1,134 +1,100 @@
 # ChordProject Parser
 
-A TypeScript library for parsing, transposing and formatting ChordPro songs.
+A TypeScript toolkit for parsing, analyzing, transposing, and formatting ChordPro songs.
+Part of [ChordProject](https://chordproject.com/).
 
-## Overview
-
-Parse any ChordPro song by using the **ChordProParser**.
-This gives back a *Song* object that can then be transposed with the **Transposer** or formatted with the **ChordProFormatter**.
-
-**Part of [ChordProject](https://chordproject.com/)**
-
-## Usage
-
-### Setup
-
-To install run:
+## Install
 
 ```sh
-$ npm i @chordproject/parser
+npm install @chordproject/parser
 ```
 
-Load with `import`:
+## Parse a song
 
-```typescript
-import { ChordProParser } from "@chordproject/parser";
-```
+`ChordProParser.parse()` converts ChordPro source into a structured `Song`. The parser keeps
+diagnostics on the parser instance so applications can show warnings beside the source or
+translate them for their own UI.
 
-### Parser
+```ts
+import { ChordProParser, HtmlFormatter } from '@chordproject/parser';
 
-To use the ChordProParser:
-
-```typescript
 const parser = new ChordProParser();
-const song = parser.parse(chordSheet);
-```
-*chordSheet* is a string variable that contains the raw ChordPro song.
+const song = parser.parse(`{title: Amazing Grace}
+{key: G}
+[G]Amazing [C]grace`);
 
-### Formatter
-
-You can choose between 3 formatters: 
-- **TextFormatter**: output the song as text
-- **HtmlFormatter**: output the song as HTML
-- **ChordProFormatter**: output the song as a "cleaned" ChordPro
-
-```typescript
-const formatter = new HtmlFormatter();
-const songText = formatter.format(song);
+const html = new HtmlFormatter().format(song);
+const warnings = parser.warnings;
 ```
 
-The formatters have default settings.
+Warnings expose a human-readable `message`, source `lineNumber`, stable `code`, and any
+interpolation `params`. Use `code` and `params` instead of `message` when building localized
+diagnostics.
 
-You can pass the settings in the formatter's constructor...
+## Transform and analyze
 
-```typescript
+`Transposer` returns a transformed song without mutating the original. `transpose()` moves the
+song up or down one semitone; `decapo()` converts capo chord shapes to sounding pitches, while
+`applyCapo()` transposes down and sets a capo.
+
+```ts
+import { ChordProParser, MusicTheoryHelper, Transposer } from '@chordproject/parser';
+
+const song = new ChordProParser().parse('{key: G}\n[G]Amazing grace');
+const upOneSemitone = Transposer.transpose(song, 'up');
+const soundingPitches = Transposer.decapo(song);
+const chordTones = MusicTheoryHelper.getChordTones('G'); // ['G', 'B', 'D']
+```
+
+`MusicTheoryHelper` also provides key and enharmonic helpers for applications that need to
+reason about notes and chord spelling.
+
+## Format output
+
+The package includes `ChordProFormatter`, `HtmlFormatter`, and `TextFormatter`. All formatters
+accept optional `FormatterSettings`; settings can also be changed after construction.
+
+```ts
+import { FormatterSettings, HtmlFormatter } from '@chordproject/parser';
+
 const settings = new FormatterSettings();
 settings.showChords = false;
+settings.showTabs = true;
+settings.showMetadata = false;
+
 const formatter = new HtmlFormatter(settings);
+const html = formatter.format(song);
 ```
 
-...or directly change the settings after the initialization
+## ChordPro coverage
 
-```typescript
-const formatter = new HtmlFormatter();
-formatter.settings.showChords = false;
-```
+The parser builds structured song, section, lyric, chord, tab, and metadata models. It handles
+common metadata directives, chord-and-lyric lines, section blocks, tab blocks, chord definitions,
+comments, and custom metadata, and reports malformed or unsupported input through `warnings`.
+The package also exports the underlying song and music models for applications that need to
+inspect or compose parsed content.
 
-## ChordPro format: Lyrics and Chords
+## Development
 
-Essentially, it looks like this:
-
-```
-    {title: Praise Adonai}
-    {artist: Paul Baloche}
-
-    {sot}
-    E|-----2---2-----|-------3-3---
-    B|---3---3---3---|-----0-------
-    G|-2-------------|---0---------
-    D|---------------|---0---------
-    A|---------------|-2-----------
-    E|---------------|-------------
-    {eot}
-
-    [Am]Who is like [F]Him,
-    The Lion and the [C]Lamb
-    Seated on the [G]throne    [E7]
-    [Am]Mountains bow [F]down
-    Every ocean [C]roars
-    To the Lord of [G]hosts
-
-    {start_of_chorus}
-    [F]Praise Ado[Am]nai
-    From the [G]rising of the sun
-    'Till the [Dm7]end of every [F]day[G]
-    [F]Praise Ado[Am]nai
-    All the [G]nations of the earth
-    All the [Dm7] Angels and the [F]Saints
-    [G]Sing [Bbsus2]praise
-    {end_of_chorus}
-```
-
-# With source code
-
-## Demo
-
-To start the demo:
+Run the demo on [http://localhost:8081](http://localhost:8081):
 
 ```sh
-$ npm run dev
+npm install
+npm run dev
 ```
 
-...then click on the http://localhost:8081/ link to open the demo in your browser
-
-## Unit test
-
-You can add tests in the tests directory and execute them with
+Run the test suite, or the coverage-enabled CI suite:
 
 ```sh
-$ npm run test
+npm test
+npm run test:ci
 ```
 
-or for the coverage
-
-```sh
-$ npm run test:ci
-```
 ## Contributing
 
-This project welcomes contributions of all types. If you find any bug or want some new features, please feel free to create an issue or submit a pull request.
-
-Join the community and chat with us on **[Discord](https://discord.gg/ZQAgwBC9c8)**
+Issues and pull requests are welcome. Join the community on
+[Discord](https://discord.gg/ZQAgwBC9c8).
 
 ## License
+
 [GNU Affero General Public License v3.0](LICENSE)

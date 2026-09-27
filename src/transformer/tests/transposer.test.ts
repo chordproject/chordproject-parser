@@ -45,11 +45,11 @@ test("spells the Bb to A transposition with sharps after the key changes", () =>
     expect(song.getAllChords().map((chord) => chord.toString())).toEqual(["C#m7", "A", "F#m", "G#m7"]);
 });
 
-test("preserves chromatic sharp spelling across E-F and B-C boundaries", () => {
+test("spells semitone transposition by destination-key scale degrees across E-F and B-C", () => {
     const song = transposeText(`{key: E}\n[Em/B]Uno\n`, "up");
 
-    expect(song.key?.toString()).toBe("E#");
-    expect(song.getAllChords().map((chord) => chord.toString())).toEqual(["E#m/B#"]);
+        expect(song.key?.toString()).toBe("F");
+        expect(song.getAllChords().map((chord) => chord.toString())).toEqual(["Fm/C"]);
 });
 
 test("keeps flat spelling in keys with flat key signatures", () => {
@@ -126,4 +126,22 @@ test.each([
 ])('$name', ({ sheet, direction, steps, expected }) => {
     const song = transposeText(sheet, direction, steps);
     expect(song.getAllChords().map((chord) => chord.toString())).toEqual(expected);
+});
+
+test.each([
+    {
+        steps: 1,
+        expectedKey: "Eb",
+        expectedChords: ["Ebm7", "Bb", "Cm7", "Gm", "Ab"],
+    },
+    {
+        steps: 2,
+        expectedKey: "E",
+        expectedChords: ["Em7", "B", "C#m7", "G#m", "A"],
+    },
+])("spells chords by destination-key degrees when transposing D up $steps semitone(s)", ({ steps, expectedKey, expectedChords }) => {
+    const song = transposeText(`{key: D}\n[Dm7] [A] [Bm7] [F#m] [G]\n`, "up", steps);
+
+    expect(song.key?.toString()).toBe(expectedKey);
+    expect(song.getAllChords().map((chord) => chord.toString())).toEqual(expectedChords);
 });
