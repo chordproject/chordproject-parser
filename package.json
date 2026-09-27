@@ -38,7 +38,11 @@
         "dev": "lsof -tiTCP:8081 -sTCP:LISTEN | xargs -r kill 2>/dev/null; vite demo --port 8081 --strictPort",
         "build": "tsup src/index.ts --format esm,cjs --dts --sourcemap --clean",
         "build:demo": "vite build demo --outDir ../demo-dist",
-        "release": "npm run build && npm publish",
+        "release": "npm run release:patch",
+        "release:patch": "npm run test:ci && npm version patch && git push --follow-tags",
+        "release:minor": "npm run test:ci && npm version minor && git push --follow-tags",
+        "release:major": "npm run test:ci && npm version major && git push --follow-tags",
+        "release:current": "npm run test:ci && git tag -a v$npm_package_version -m \"Release v$npm_package_version\" && git push --follow-tags",
         "test": "npx jest --runInBand --detectOpenHandles --colors --verbose --reporters=default",
         "test:ci": "npx jest --ci --runInBand --silent --colors --coverage"
     },

@@ -95,8 +95,10 @@ npm run test:ci
 Publishing uses npm Trusted Publishing from GitHub Actions; no npm token is stored in GitHub.
 In npm package settings, add a GitHub Actions trusted publisher for organization `chordproject`,
 repository `chordproject-parser`, and workflow file `publish.yml`. After merging a version bump,
-push a matching tag such as `v1.2.1`. The workflow verifies the tag against `package.json`, runs
-the build and CI tests, then publishes to npmjs.org using OIDC.
+run `npm run release` for a patch, or `npm run release:minor` / `npm run release:major`. These
+commands run CI tests, bump the version, commit and tag it, then push; GitHub Actions publishes
+to npmjs.org using OIDC. For the already-prepared first release `1.2.0`, run `npm run
+release:current` once instead of bumping again. The tag must match `package.json`.
 
 ## Contributing
 
