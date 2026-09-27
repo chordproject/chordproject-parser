@@ -90,6 +90,14 @@ npm test
 npm run test:ci
 ```
 
+## Publishing
+
+Publishing uses npm Trusted Publishing from GitHub Actions; no npm token is stored in GitHub.
+In npm package settings, add a GitHub Actions trusted publisher for organization `chordproject`,
+repository `chordproject-parser`, and workflow file `publish.yml`. After merging a version bump,
+push a matching tag such as `v1.2.1`. The workflow verifies the tag against `package.json`, runs
+the build and CI tests, then publishes to npmjs.org using OIDC.
+
 ## Contributing
 
 Issues and pull requests are welcome. Join the community on

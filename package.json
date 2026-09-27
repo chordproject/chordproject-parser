@@ -19,6 +19,13 @@
         "src/style.css"
     ],
     "description": "A TypeScript library for parsing and formatting ChordPro songs.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/chordproject/chordproject-parser.git"
+    },
+    "publishConfig": {
+        "registry": "https://registry.npmjs.org/"
+    },
     "license": "AGPL-3.0-only",
     "keywords": [
         "chordpro",
